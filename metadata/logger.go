@@ -17,6 +17,8 @@
 
 package metadata
 
+import "fmt"
+
 var log Logger = DiscardLogger{}
 
 // Logger partially implements the go-log/logr's interface:
@@ -31,9 +33,21 @@ type Logger interface {
 type DiscardLogger struct{}
 
 func (d DiscardLogger) Info(msg string, kv ...any) {
+	for idx, _ := range kv {
+		if idx % 2 == 0 {
+			msg = fmt.Sprintf("%s, %+v = %+v", msg, kv[idx], kv[idx+1])
+		}
+    }
+	fmt.Print("INFO : " + msg + "\n")
 }
 
 func (d DiscardLogger) Error(err error, msg string, kv ...any) {
+	for idx, _ := range kv {
+		if idx % 2 == 0 {
+			msg = fmt.Sprintf("%s, %+v = %+v", msg, kv[idx], kv[idx+1])
+		}
+    }
+	fmt.Print("ERROR : " + msg + "\n")
 }
 
 func SetLogger(logger Logger) {

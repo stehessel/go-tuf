@@ -103,10 +103,12 @@ func (trusted *TrustedMetadata) UpdateTimestamp(timestampData []byte) (*metadata
 		return nil, &metadata.ErrRuntime{Msg: "cannot update timestamp after snapshot"}
 	}
 	// client workflow 5.3.10: Make sure final root is not expired.
+	log.Info(fmt.Sprintf("trusted ref time %+v", trusted.RefTime))
+	log.Info(fmt.Sprintf("trusted root signed %+v", trusted.Root.Signed))
 	if trusted.Root.Signed.IsExpired(trusted.RefTime) {
 		// no need to check for 5.3.11 (fast forward attack recovery):
 		// timestamp/snapshot can not yet be loaded at this point
-		return nil, &metadata.ErrExpiredMetadata{Msg: "final root.json is expired"}
+		return nil, &metadata.ErrExpiredMetadata{Msg: fmt.Sprintf("final root.json is expired. refTime=%+v, root.Signed=%+v, trusted=%+v", trusted.RefTime, trusted.Root.Signed, trusted)}
 	}
 	log.Info("Updating timestamp")
 	newTimestamp, err := metadata.Timestamp().FromBytes(timestampData)

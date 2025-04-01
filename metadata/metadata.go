@@ -257,6 +257,7 @@ func (meta *Metadata[T]) VerifyDelegate(delegatedRole string, delegatedMetadata 
 	switch i := i.(type) {
 	// Root delegator
 	case *Metadata[RootType]:
+		log.Info(fmt.Sprintf("metadata = %+v", i))
 		keys = i.Signed.Keys
 		if role, ok := (*i).Signed.Roles[delegatedRole]; ok {
 			roleKeyIDs = role.KeyIDs
@@ -321,6 +322,7 @@ func (meta *Metadata[T]) VerifyDelegate(delegatedRole string, delegatedMetadata 
 				hash = crypto.SHA256
 			}
 		}
+		log.Info(fmt.Sprintf("keyID = %+v, hash = %+v", keyID, hash.String()))
 		// load a verifier based on that key
 		verifier, err := signature.LoadVerifier(publicKey, hash)
 		if err != nil {
@@ -331,6 +333,8 @@ func (meta *Metadata[T]) VerifyDelegate(delegatedRole string, delegatedMetadata 
 		switch d := delegatedMetadata.(type) {
 		case *Metadata[RootType]:
 			for _, signature := range d.Signatures {
+				log.Info(fmt.Sprintf("signature.keyID = %+v", signature.KeyID))
+				log.Info(fmt.Sprintf("signature.sig = %+v", signature.Signature.String()))
 				if signature.KeyID == keyID {
 					sign = signature
 				}
@@ -372,10 +376,11 @@ func (meta *Metadata[T]) VerifyDelegate(delegatedRole string, delegatedMetadata 
 		default:
 			return &ErrType{Msg: "unknown delegated metadata type"}
 		}
+		log.Info(fmt.Sprintf("sign.Signature = %+v, payload = %+v", string(sign.Signature.String()), string(payload)))
 		// verify if the signature for that payload corresponds to the given key
 		if err := verifier.VerifySignature(bytes.NewReader(sign.Signature), bytes.NewReader(payload)); err != nil {
 			// failed to verify the metadata with that key ID
-			log.Info("Failed to verify %s with key ID %s", delegatedRole, keyID)
+			log.Info(fmt.Sprintf("Failed to verify %s with key ID %s: %s", delegatedRole, keyID, err.Error()))
 		} else {
 			// save the verified keyID only if verification passed
 			signingKeys[keyID] = true
